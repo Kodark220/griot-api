@@ -1,6 +1,7 @@
 #!/bin/bash
-export NVM_DIR="$HOME/.nvm"
-. "$NVM_DIR/nvm.sh"
-nvm use 22 > /dev/null 2>&1
-cd /home/vintage/tmp-groit
-exec node node_modules/.bin/next dev --port 3000
+# Start the Griot API locally
+cd "$(dirname "$0")"
+cp -n .env.example .env 2>/dev/null
+npm install --silent
+echo "Starting Griot API..."
+node src/index.js

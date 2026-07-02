@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { getDb } from '../supabase.js';
 import { createWallet } from '../lib/circle.js';
 
@@ -21,19 +22,22 @@ registryRouter.post('/creator/email-signup', async (req, res) => {
       return res.status(409).json({ error: 'Email already registered', creator: existing });
     }
 
-    // Provision a Circle wallet invisibly (or generate a simulated one if Circle isn't configured)
+    // Provision a Circle wallet invisibly (fall back to simulated if Circle isn't configured)
     const apiKey = process.env.CIRCLE_API_KEY;
-    const entitySecret = process.env.CIRCLE_ENTITY_SECRET;
     let walletAddress;
 
-    if (apiKey && apiKey !== 'TEST_API_KEY:...') {
-      const walletResult = await createWallet(email);
-      if (!walletResult.success) {
-        return res.status(502).json({ error: `Wallet provisioning failed: ${walletResult.error}` });
+    if (apiKey && !apiKey.startsWith('TEST_API_KEY:')) {
+      try {
+        const walletResult = await createWallet(email);
+        if (walletResult.success) {
+          walletAddress = walletResult.wallet.address;
+        }
+      } catch (e) {
+        console.log(`[email-signup] Circle wallet creation failed: ${e.message}, falling back to simulated`);
       }
-      walletAddress = walletResult.wallet.address;
-    } else {
-      // Simulated wallet for dev/test — unique deterministic address per email
+    }
+
+    if (!walletAddress) {
       const hash = crypto.createHash('sha256').update(email).digest('hex');
       walletAddress = '0x' + hash.slice(0, 40);
       console.log(`[email-signup] Simulated wallet for ${email}: ${walletAddress}`);

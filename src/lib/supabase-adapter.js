@@ -100,5 +100,21 @@ export function createSupabaseAdapter(supabase) {
         .eq('registry_id', registryId);
       return data || [];
     },
+
+    async getRegistryFeed(limit, offset) {
+      const { data } = await supabase
+        .from('registry')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      return data || [];
+    },
+
+    async getRegistryCount() {
+      const { count } = await supabase
+        .from('registry')
+        .select('*', { count: 'exact', head: true });
+      return count || 0;
+    },
   };
 }

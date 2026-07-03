@@ -194,3 +194,17 @@ registryRouter.get('/by-wallet/:wallet', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Public feed — latest articles sorted by newest
+registryRouter.get('/feed', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const offset = parseInt(req.query.offset) || 0;
+    const db = await getDb();
+    const articles = await db.getRegistryFeed(limit, offset);
+    const total = await db.getRegistryCount();
+    res.json({ articles, total, limit, offset });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

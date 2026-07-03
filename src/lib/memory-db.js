@@ -106,4 +106,14 @@ export const db = {
     }
     return results;
   },
+
+  async getRegistryFeed(limit, offset) {
+    const all = Array.from(registry.values())
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return all.slice(offset, offset + limit);
+  },
+
+  async getRegistryCount() {
+    return registry.size;
+  },
 };

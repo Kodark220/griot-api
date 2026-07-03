@@ -179,14 +179,9 @@ function Home({ isConnected, onConnect, mounted }: { isConnected: boolean; onCon
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button size="lg" onClick={onConnect} className="gap-2 shadow-lg shadow-gold-500/20 px-7 text-base">
-                    <Wallet className="w-5 h-5" /> Connect Wallet
-                  </Button>
-                  <Button variant="outline" size="lg" onClick={() => window.dispatchEvent(new CustomEvent('nav', { detail: 'register' }))} className="gap-2 px-7 text-base">
-                    <Mail className="w-5 h-5" /> Register with Email
-                  </Button>
-                </>
+                <Button size="lg" onClick={onConnect} className="gap-2 shadow-lg shadow-gold-500/20 px-8 text-base">
+                  <Wallet className="w-5 h-5" /> Connect Wallet to Start
+                </Button>
               )}
             </motion.div>
           </motion.div>
@@ -271,7 +266,7 @@ function Register() {
         body: JSON.stringify({ email, username: emailUsername }),
       });
       const d = await r.json();
-      if (r.ok) { setEmailDone(d); setEmail(''); setEmailUsername(''); sessionStorage.setItem('griot_email_wallet', d.wallet_address); }
+      if (r.ok) { setEmailDone(d); setEmail(''); setEmailUsername(''); }
       else setEmailErr(d.error || 'Failed');
     } catch (err: any) { setEmailErr(err.message); }
     setEmailLoading(false);
@@ -292,6 +287,23 @@ function Register() {
     } catch (err: any) { setErr(err.message); }
     setLoading(false);
   };
+
+  if (!isConnected) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+        <Card className="max-w-sm mx-auto">
+          <CardHeader>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold-500/10 to-gold-400/10 flex items-center justify-center mx-auto mb-3 border border-gold-400/20">
+              <FileText className="w-6 h-6 text-gold-500" />
+            </div>
+            <CardTitle>Connect Wallet</CardTitle>
+            <CardDescription>Connect to register articles on Arc Testnet</CardDescription>
+          </CardHeader>
+          <CardContent><Button onClick={() => connect({ connector: connectors[0] })} className="w-full gap-2"><Wallet className="w-4 h-4" /> Connect Wallet</Button></CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
@@ -467,22 +479,19 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Get wallet from either connected wallet or email signup
-  const walletAddress = address || (typeof window !== 'undefined' ? sessionStorage.getItem('griot_email_wallet') : null);
-
   useEffect(() => {
-    if (!walletAddress || loaded) return;
+    if (!address || loaded) return;
     (async () => {
       setLoading(true);
       try {
-        const r = await fetch(`${API}/api/registry/by-wallet/${walletAddress}`);
+        const r = await fetch(`${API}/api/registry/by-wallet/${address}`);
         if (r.ok) { const d = await r.json(); setArticles(d.articles || []); setEarnings(d.total_earnings || 0); }
       } catch { /* no creator yet */ }
       setLoading(false); setLoaded(true);
     })();
-  }, [walletAddress, loaded]);
+  }, [address, loaded]);
 
-  if (!isConnected && !walletAddress) {
+  if (!isConnected) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-24 text-center">
         <Card className="max-w-sm mx-auto">

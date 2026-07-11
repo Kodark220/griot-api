@@ -535,6 +535,7 @@ export async function approveReaderBudget(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ budget_usdc: budgetUsdc }),
   });
+  return res.json();
 }
 
 /**

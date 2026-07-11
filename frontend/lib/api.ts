@@ -13,6 +13,14 @@ import type {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 // Flip to false once the real backend endpoint is confirmed live.
 // Can also be swapped per-function if you want to migrate one endpoint at a time.
 export const USE_MOCK = true;
@@ -419,7 +427,6 @@ export async function runAgent(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, budget_usdc: budgetUsdc, attachment, reader_id: readerId }),
   });
-  return res.json();
 }
 
 // ---------- reader identity (Circle-managed reader wallet, email login) ----------

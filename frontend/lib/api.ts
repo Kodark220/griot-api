@@ -93,6 +93,48 @@ interface MockRegistryEntry {
 const MOCK_REGISTRY_STORAGE_KEY = "griot_mock_registry";
 const mockRegistry = new Map<string, MockRegistryEntry>();
 
+// Hydrate mock registry from localStorage on init (SSR-safe)
+if (typeof window !== "undefined") {
+  try {
+    const saved = window.localStorage.getItem(MOCK_REGISTRY_STORAGE_KEY);
+    if (saved) {
+      const entries: MockRegistryEntry[] = JSON.parse(saved);
+      for (const e of entries) {
+        mockRegistry.set(e.registry_id, e);
+        mockRegistry.set(e.canonical_url, e);
+        mockRegistry.set(`/read/${e.canonical_url.split("/").pop()}`, e);
+      }
+    }
+  } catch {
+    // non-critical
+  }
+}
+
+function saveMockRegistryToStorage() {
+  if (typeof window !== "undefined") {
+    try {
+      const entries = Array.from(
+        new Set(mockRegistry.values())
+      ).map((e) => ({
+        registry_id: e.registry_id,
+        creator_id: e.creator_id,
+        price: e.price,
+        wallet: e.wallet,
+        mode: e.mode,
+        canonical_url: e.canonical_url,
+        title: e.title,
+        content: e.content,
+        citation_count: e.citation_count,
+        total_earned: e.total_earned,
+        recent_payments: e.recent_payments,
+      }));
+      window.localStorage.setItem(MOCK_REGISTRY_STORAGE_KEY, JSON.stringify(entries));
+    } catch {
+      // storage full or unavailable — non-critical
+    }
+  }
+}
+
 // Returns the unique underlying entries (dedupes the 3 lookup keys per entry
 // that all point to the same object).
 function uniqueMockEntries(): MockRegistryEntry[] {

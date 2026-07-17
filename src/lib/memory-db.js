@@ -6,6 +6,7 @@
 const creators = new Map();
 const registry = new Map();
 const payments = new Map();
+const readers = new Map();
 
 function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -34,7 +35,7 @@ export const db = {
     const existing = await this.findCreatorByWallet(wallet);
     if (existing) return existing;
 
-    const creator = { id: uuid(), wallet_address: wallet, username, email, created_at: new Date().toISOString() };
+    const creator = { id: uuid(), wallet_address: wallet, username, email, wallet_id: null, created_at: new Date().toISOString() };
     creators.set(creator.id, creator);
     return creator;
   },
@@ -115,5 +116,58 @@ export const db = {
 
   async getRegistryCount() {
     return registry.size;
+  },
+
+  // ---------- Readers ----------
+
+  async findReaderByEmail(email) {
+    for (const r of readers.values()) {
+      if (r.email === email) return r;
+    }
+    return null;
+  },
+
+  async createReader(email, walletId, walletAddress) {
+    const existing = await this.findReaderByEmail(email);
+    if (existing) return existing;
+
+    const reader = {
+      id: `reader-${uuid()}`,
+      email,
+      wallet_id: walletId,
+      wallet_address: walletAddress,
+      budget: 0,
+      created_at: new Date().toISOString(),
+    };
+    readers.set(reader.id, reader);
+    return reader;
+  },
+
+  async getReader(id) {
+    return readers.get(id) || null;
+  },
+
+  async setReaderBudget(id, amount) {
+    const reader = readers.get(id);
+    if (reader) {
+      reader.budget = amount;
+    }
+  },
+
+  async recordPayment(p) {
+    const record = {
+      id: uuid(),
+      registry_id: p.registry_id,
+      content_id: p.content_id,
+      endpoint: p.endpoint,
+      payer: p.payer,
+      creator_wallet: p.creator_wallet,
+      amount_usdc: p.amount_usdc,
+      network: p.network,
+      gateway_tx: p.gateway_tx,
+      created_at: new Date().toISOString(),
+    };
+    payments.set(record.id, record);
+    return record;
   },
 };

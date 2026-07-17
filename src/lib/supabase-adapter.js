@@ -116,5 +116,41 @@ export function createSupabaseAdapter(supabase) {
         .select('*', { count: 'exact', head: true });
       return count || 0;
     },
+
+    // Readers
+    async findReaderByEmail(email) {
+      const { data } = await supabase
+        .from('readers')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+      return data;
+    },
+
+    async createReader(email, walletId, walletAddress) {
+      const { data, error } = await supabase
+        .from('readers')
+        .insert({ email, wallet_id: walletId, wallet_address: walletAddress })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async getReader(id) {
+      const { data } = await supabase
+        .from('readers')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      return data;
+    },
+
+    async setReaderBudget(id, amount) {
+      await supabase
+        .from('readers')
+        .update({ budget: amount })
+        .eq('id', id);
+    },
   };
 }
